@@ -1,4 +1,8 @@
 
+
+__author__ = 'Weimin'
+__date__ = '17 December, 2014'
+
 import pandas as pd
 import time
 import numpy as np
