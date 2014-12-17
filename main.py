@@ -1,8 +1,4 @@
 
-
-__author__ = 'Weimin'
-__date__ = '17 December, 2014'
-
 import pandas as pd
 import time
 import numpy as np
@@ -13,6 +9,7 @@ import gc
 from Task import Task
 from MyToy import MyToy
 import heapq
+
 
 numOfElfs = 900
 prodUpper = 4.0
@@ -27,6 +24,7 @@ lastArrivalDay = datetime(2014, 12,10,23,59)
 Elfs = {'id' : [i+1 for i in range(numOfElfs)], 'avaiTime' : today + increment, 'productivity' : 1.0}
 Elfs = pd.DataFrame(Elfs)
 
+
 toys = pd.read_csv('toys_final.csv')  
 # toys['Completed'] = pd.Series(int(0), index=toys.index)
 toys.iloc[:,1] = toys.iloc[:,1].apply(lambda x: datetime.strptime(x, '%Y %m %d %H %M'))    
@@ -35,18 +33,8 @@ allToysCompleted = False
 finalResultIndex = 0
  
 # Create the finalResult dataframe
-columns = ['ToyId', 'ElfId', 'StartTime', 'Duration']
-i = range(1,10000001)
-finalResult = pd.DataFrame(columns = columns,index = i)
-# give proper datatype for each column
-finalResult['ToyId'] = int(1)
-finalResult['ElfId'] = int(1)
-finalResult['StartTime'] = datetime(2014,1,1,0,1)
-finalResult['Duration'] = int(1)
-
-print 'finalResult DataFrame has been created\n'
-#Declare: 
-thisElf = Elfs.loc[0,:]
+columnNames = ['ToyId', 'ElfId', 'StartTime', 'Duration']
+finalResult = []
 
 toysIndex = 0
 totalToys = 10000000
@@ -80,36 +68,34 @@ while (True):
                 allToysCompleted = True
                 break
             else:                       # ** To OPTIMIZE **
-                print 'run out of toys for %s' % today
+                print 'run out of toys for %s/n' % today
                 break
-        else:
+        else:                                                                                # thisElf[0]: avaiTime, [1]id, [2]productivity
             # **** The first elf in elfsReady
-            thisElf.iat[0] = pd.Timestamp(elfsReady.iat[0,0]) # pick up the elf 
-            thisElf.iat[1] = elfsReady.iat[0,1]
-            thisElf.iat[2] = elfsReady.iat[0,2]
+            thisElfAvaiTime = pd.Timestamp(elfsReady.iat[0,0]) # pick up the elf 
+            thisElfId = elfsReady.iat[0,1]
+            thisElfProductivity = elfsReady.iat[0,2]
             while( len(toysList) > 0 ): # keep assigning to this Elf till he sleeps ...
                 
                 thisDuration, thisToy = heapq.heappop(toysList)
                 
-                updatedProductivity, nextAvaiTime, actualWorkingMinutes = Task.ProcessTask(thisElf.iat[0],thisElf.iat[2],thisDuration, endOfToday) # call the ProcessTask function
+                updatedProductivity, nextAvaiTime, actualWorkingMinutes = Task.ProcessTask(thisElfAvaiTime,thisElfProductivity,thisDuration, endOfToday) 
                 
-                # add this row to finalResult dataframe
-                finalResult.iat[finalResultIndex,0] = thisToy.toyId # ToyId 
-                finalResult.iat[finalResultIndex,1] = thisElf.iat[1] # ElfId
-                finalResult.iat[finalResultIndex,2] = thisElf.iat[0] # StartTime             
-                finalResult.iat[finalResultIndex,3] = actualWorkingMinutes 
+                # add this row to finalResult list
+                tempResult = [thisToy.toyId, thisElfId, thisElfAvaiTime, actualWorkingMinutes]
+                finalResult.append(tempResult)
                 finalResultIndex += 1
                 
                 # update this elf 
                 if nextAvaiTime> endOfToday:   # has put him to sleep, and jump to endIndex elf
                     #Update Elfs list for this elf
-                    Elfs.loc[ Elfs.loc[:,'id'] == thisElf.at['id'], 'productivity'] = updatedProductivity
-                    Elfs.loc[ Elfs.loc[:,'id'] == thisElf.at['id'], 'avaiTime'] = nextAvaiTime
-                    elfsReady = elfsReady.loc[ elfsReady.loc[:,'id'] != thisElf.at['id'] ] # delete thisElf from elfsReady
-                    break; 
+                    Elfs.loc[ Elfs.loc[:,'id'] == thisElfId, 'productivity'] = updatedProductivity
+                    Elfs.loc[ Elfs.loc[:,'id'] == thisElfId, 'avaiTime'] = nextAvaiTime
+                    elfsReady = elfsReady.loc[ elfsReady.loc[:,'id'] != thisElfId ] # delete thisElf from elfsReady
+                    break
                 else:                                        # not put to sleep yet
-                    thisElf.iat[2] = updatedProductivity
-                    thisElf.iat[0] = nextAvaiTime
+                    thisElfProductivity = updatedProductivity
+                    thisElfAvaiTime = nextAvaiTime
             # **** The first elf in elfsReady    
             
             elfsReadyRemained = len(elfsReady)
@@ -118,46 +104,46 @@ while (True):
                 break
             
             # **** The last elf in elfsReady  
-            thisElf.iat[0] = pd.Timestamp(elfsReady.iat[elfsReadyRemained-1,0]) # pick up the elf 
-            thisElf.iat[1] = elfsReady.iat[elfsReadyRemained-1,1]
-            thisElf.iat[2] = elfsReady.iat[elfsReadyRemained-1,2]
-            
+            thisElfAvaiTime = pd.Timestamp(elfsReady.iat[elfsReadyRemained-1,0]) # pick up the elf 
+            thisElfId = elfsReady.iat[elfsReadyRemained-1,1]
+            thisElfProductivity = elfsReady.iat[elfsReadyRemained-1,2]
             while( len(toysList) > 0 ): # keep assigning to this Elf till he sleeps ...
                 
                 heapq._heapify_max(toysList)
                 thisDuration, thisToy = heapq.heappop(toysList)
                 heapq.heapify(toysList)
                 
-                updatedProductivity, nextAvaiTime, actualWorkingMinutes = Task.ProcessTask(thisElf.iat[0],thisElf.iat[2],thisDuration, endOfToday) # call the ProcessTask function
+                updatedProductivity, nextAvaiTime, actualWorkingMinutes = Task.ProcessTask(thisElfAvaiTime,thisElfProductivity,thisDuration, endOfToday) 
                 
-                # add this row to finalResult dataframe
-                finalResult.iat[finalResultIndex,0] = thisToy.toyId # ToyId 
-                finalResult.iat[finalResultIndex,1] = thisElf.iat[1] # ElfId
-                finalResult.iat[finalResultIndex,2] = thisElf.iat[0] # StartTime             
-                finalResult.iat[finalResultIndex,3] = actualWorkingMinutes
+                # add this row to finalResult list
+                tempResult = [thisToy.toyId, thisElfId, thisElfAvaiTime, actualWorkingMinutes]
+                finalResult.append(tempResult)
                 finalResultIndex += 1
                 
                 # update this elf  ## EXTREMELY SLOW!!! ##
-                if result[1] > endOfToday:   # has put him to sleep
+                if nextAvaiTime > endOfToday:   # has put him to sleep
                     #Update Elfs list for this elf
-                    Elfs.loc[ Elfs.loc[:,'id'] == thisElf.at['id'], 'productivity'] = updatedProductivity
-                    Elfs.loc[ Elfs.loc[:,'id'] == thisElf.at['id'], 'avaiTime'] = nextAvaiTime
-                    elfsReady = elfsReady.loc[ elfsReady.loc[:,'id'] != thisElf.at['id'] ] # delete thisElf from elfsReady
-                    break; 
+                    Elfs.loc[ Elfs.loc[:,'id'] == thisElfId, 'productivity'] = updatedProductivity
+                    Elfs.loc[ Elfs.loc[:,'id'] == thisElfId, 'avaiTime'] = nextAvaiTime
+                    elfsReady = elfsReady.loc[ elfsReady.loc[:,'id'] != thisElfId ] # delete thisElf from elfsReady
+                    break
                 else:                                  # not put to sleep yet
-                    thisElf.iat[2] = updatedProductivity #Productivity
-                    thisElf.iat[0] = nextAvaiTime #avaiTime
+                    thisElfProductivity = updatedProductivity #Productivity
+                    thisElfAvaiTime = nextAvaiTime #avaiTime
             # **** The last elf in elfsReady  
 
             # update the last elf who has completed all the toys
-            Elfs.loc[ Elfs.loc[:,'id'] == thisElf.at['id'], 'productivity'] = updatedProductivity
-            Elfs.loc[ Elfs.loc[:,'id'] == thisElf.at['id'], 'avaiTime'] = nextAvaiTime    
+            Elfs.loc[ Elfs.loc[:,'id'] == thisElfId, 'productivity'] = updatedProductivity
+            Elfs.loc[ Elfs.loc[:,'id'] == thisElfId, 'avaiTime'] = nextAvaiTime    
             
         #else part  
     #while      
 
     if allToysCompleted == True:    # mission is done!!
         break
+        
+print "mission done!"
+
         
 # end of Main while(True)
         
