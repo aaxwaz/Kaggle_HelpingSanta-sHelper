@@ -112,4 +112,13 @@ while (True):                   # every day
     if allToysCompleted == True:    # mission is done!!
         break
 print "mission done!"
+
+'''
+# prepare submission file
+resultFile = open('weiminSubmission.csv', 'wb')
+wr = csv.writer(resultFile, dialect='excel')
+wr.writerow(['ToyId', 'ElfId', 'StartTime', 'Duration'])
+wr.writerows(finalResult)
+resultFile.close()'''
+
 # end of Main while(True)
