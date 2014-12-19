@@ -94,7 +94,7 @@ while (True):                   # every day
                 
                 updatedProductivity, nextAvaiTime, actualWorkingMinutes = Task.ProcessTask(thisElf.avaiTime,thisElfProductivity,thisDuration, endOfToday) 
                 # write to finalResult list 
-                tempResult = [thisToy.toyId, thisElf.id, pd.Timestamp(thisElf.avaiTime).strftime('%Y %m %d %H %M'), actualWorkingMinutes]
+                tempResult = [thisToy.toyId, thisElf.id, thisElf.avaiTime.strftime('%Y %m %d %H %M'), actualWorkingMinutes]
                 finalResult.append(tempResult)
                 finalResultIndex += 1
                 
