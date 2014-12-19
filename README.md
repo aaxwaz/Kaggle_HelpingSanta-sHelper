@@ -1,4 +1,4 @@
 Kaggle_HelpingSanta-sHelper
 ===========================
 
-Basic solution (always assign tasks with high duration to elfs with high productivity, and vise versa)
+My simple solution - assigning tasks with narrower duration to elfs with smaller productivity
