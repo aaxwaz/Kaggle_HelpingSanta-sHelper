@@ -5,14 +5,17 @@ __date__ = 'December 19, 2015'
 import pandas as pd
 import time
 import numpy as np
-from datetime import datetime
-from datetime import timedelta
 import math
 import gc
+import heapq
+import csv
+
 from Task import Task
 from MyToy import MyToy
 from MyElf import MyElf
-import heapq
+from datetime import datetime
+from datetime import timedelta
+from sys import stdout
 
 numOfElfs = 900
 prodUpper = 4.0
@@ -47,6 +50,7 @@ def create_elves(NUM_ELVES):
 Elfs = create_elves(numOfElfs)  # sorted by avaiTime
 elfsReady = []                  # elfs ready to work for today
     
+startingTime = datetime.now()
 while (True):                   # every day
     
     today = today + increment                                   # today is everyday at 9:00 am
@@ -69,6 +73,8 @@ while (True):                   # every day
         continue
     #print "%s : %d elfs starting to work ... " % (today, len(elfsReady)) 
     #print "%f of toys has been completed!" % (finalResultIndex/10000000.0)
+    stdout.write("\r%s" % today)
+    stdout.flush()
     
     while(toysIndex < totalToys):   # get ready all toys arrived BEFORE today AND not yet assigned out
         if pd.Timestamp(toys.iat[toysIndex, 1]) <= today:
@@ -91,10 +97,10 @@ while (True):                   # every day
             thisElfProductivity, thisElf = heapq.heappop(elfsReady)
             while( len(toysList) > 0 ):
                 thisDuration, thisToy = heapq.heappop(toysList)
-                
-                updatedProductivity, nextAvaiTime, actualWorkingMinutes = Task.ProcessTask(thisElf.avaiTime,thisElfProductivity,thisDuration, endOfToday) 
+                actualStartTime = thisElf.avaiTime if thisElf.avaiTime > today else today # make sure don't start before toy arrives
+                updatedProductivity, nextAvaiTime, actualWorkingMinutes = Task.ProcessTask( actualStartTime, thisElfProductivity,thisDuration, endOfToday) 
                 # write to finalResult list 
-                tempResult = [thisToy.toyId, thisElf.id, thisElf.avaiTime.strftime('%Y %m %d %H %M'), actualWorkingMinutes]
+                tempResult = [thisToy.toyId, thisElf.id, actualStartTime.strftime('%Y %m %d %H %M'), actualWorkingMinutes]
                 finalResult.append(tempResult)
                 finalResultIndex += 1
                 
@@ -108,17 +114,19 @@ while (True):                   # every day
                     thisElf.avaiTime = nextAvaiTime
             # push back thisElf who has completed all the toys
             if len(toysList) == 0 and thisElf.avaiTime < endOfToday:
-                heapq.heappush(elfsReady, (thisElf.productivity, thisElf))  
+                heapq.heappush(elfsReady, (thisElf.productivity, thisElf)) 
+                    
     if allToysCompleted == True:    # mission is done!!
         break
-print "mission done!"
+    
+print "mission done!\n"
+print datetime.now() - startingTime
 
-'''
 # prepare submission file
-resultFile = open('weiminSubmission.csv', 'wb')
+resultFile = open('weiminSubmission2.csv', 'wb')
 wr = csv.writer(resultFile, dialect='excel')
 wr.writerow(['ToyId', 'ElfId', 'StartTime', 'Duration'])
 wr.writerows(finalResult)
-resultFile.close()'''
+resultFile.close()
 
 # end of Main while(True)
